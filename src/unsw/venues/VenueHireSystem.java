@@ -4,6 +4,8 @@
 package unsw.venues;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 import org.json.JSONArray;
@@ -19,13 +21,16 @@ import org.json.JSONObject;
  *
  */
 public class VenueHireSystem {
-
+	List<Venue> venues;
+	List<JSONObject> bookings;
     /**
      * Constructs a venue hire system. Initially, the system contains no venues,
      * rooms, or bookings.
      */
     public VenueHireSystem() {
         // TODO Auto-generated constructor stub
+    	List<Venue> venues = new ArrayList<Venue>();
+    	List<JSONObject> bookings = new ArrayList<JSONObject>();
     }
 
     private void processCommand(JSONObject json) {
@@ -57,6 +62,22 @@ public class VenueHireSystem {
 
     private void addRoom(String venue, String room, String size) {
         // TODO Process the room command
+    	// if this venue exists, then use it
+    	Venue new_venue = null;
+    	int length = venues.size();
+    	for ( int i = 0; i < length ; i++ ) {
+    		if (venues.get(i).name.equals(venue)) {
+    			new_venue = venues.get(i);
+    			break;
+    		}
+    	}
+    	// if not, create a new venue
+    	if (new_venue == null) {
+    		new_venue = new Venue(venue);
+    	}   	
+    	// make the room and add it to venue
+    	Room new_room = new Room(room, size);
+    	new_venue.addRoom(new_room);
     }
 
     public JSONObject request(String id, LocalDate start, LocalDate end,
