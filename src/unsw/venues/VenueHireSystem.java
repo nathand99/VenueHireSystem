@@ -136,48 +136,44 @@ public class VenueHireSystem {
     
     // looks at a venue and checks if booking can be made for that venue
     private Boolean canBook(Venue venue, LocalDate start, LocalDate end, int small, int medium, int large) {
+    	// number of small, medium, large rooms required. Decremented as room can be booked
     	int sr = small;
     	int mr = medium;
     	int lr = large;
+    	// for each room in the venue - if size needed, checks if room is available
     	for (Room r : venue.rooms) {
-    		if (sr == 0) {
-    			break;
+    		// all rooms are booked - so can book
+    		if (sr == 0 && mr == 0 && lr == 0) {
+    			return true;
     		}
-    		if (r.size.equals("small")) {
+    		if (r.size.equals("small") && sr > 0) {
     			if (isAvailable(r, start, end)) {
         			sr--;
         		}
-    		}   		
-    	}
-    	for (Room r : venue.rooms) {
-    		if (mr == 0) {
-    			break;
     		}
-    		if (r.size.equals("medium")) {
+    		if (r.size.equals("medium") && mr > 0) {
     			if (isAvailable(r, start, end)) {
         			mr--;
         		}
-    		}   		
-    	}
-    	for (Room r : venue.rooms) {
-    		if (lr == 0) {
-    			break;
-    		}
-    		if (r.size.equals("large")) {
+    		}   
+    		if (r.size.equals("large") && lr > 0) {
     			if (isAvailable(r, start, end)) {
         			lr--;
         		}
-    		}   		
+    		}   
     	}
-    	
-    	if (sr == 0 && mr == 0 && lr == 0) {
-    		return true;
-    	} else {
-    		return false;
-    	}  	
+    	// room request not fulfilled - cannot book
+    	return false;
     }
     
     private Boolean isAvailable(Room r, LocalDate start, LocalDate end) {
+    	for (Booking b : bookings) {
+    		if (b.room.equals(r)) {
+    			// check dates
+    			// if room is booked 
+    			return false;
+    		}
+    	}
     	return true;
     }
     
