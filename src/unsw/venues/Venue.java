@@ -6,6 +6,10 @@ import java.util.List;
 public class Venue {
 	String name;
 	List<Room> rooms = new ArrayList<Room>();
+	int small = 0;
+	int medium = 0;
+	int large = 0;
+		
 	
 	/**
 	 * constructor
@@ -16,8 +20,16 @@ public class Venue {
 		this.name = name;
 	}
 	
-	public void addRoom(Room new_room) {
+	public void addRoom(Room new_room, String size) {
 		rooms.add(new_room);
+		switch (size) {
+        case "small":
+        	this.small++;
+        case "medium":
+        	this.medium++;
+        case "large":
+        	this.large++;
+		}
 	}
 
 	@Override
