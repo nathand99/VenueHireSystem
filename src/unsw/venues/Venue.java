@@ -25,10 +25,13 @@ public class Venue {
 		switch (size) {
         case "small":
         	this.small++;
+        	break;
         case "medium":
         	this.medium++;
+        	break;
         case "large":
         	this.large++;
+        	break;
 		}
 	}
 
@@ -38,6 +41,9 @@ public class Venue {
 		for ( int i = 0; i < length ; i++ ) {
     		System.out.println(rooms.get(i));
 		}
+		System.out.println(small);
+		System.out.println(medium);
+		System.out.println(large);
 		return "";
 	}
 	
