@@ -12,14 +12,21 @@ public class Venue {
 		
 	
 	/**
-	 * constructor
-	 * @param size
+	 * constructor - creates an empty venue, only setting name
+	 * @param name - name of venue
 	 */
 	public Venue(String name) {
 		super();
 		this.name = name;
 	}
 	
+	/**
+	 * method - adds a room to venue
+	 * @param new_room - room to be added
+	 * @param size - room size (small, medium, or large)
+	 * 
+	 * @return void
+	 */
 	public void addRoom(Room new_room, String size) {
 		rooms.add(new_room);
 		switch (size) {
