@@ -17,7 +17,8 @@ public class Room {
 
 	@Override
 	public String toString() {
-		String message = "name: " + name + " size: " + size;
+		//String message = "name: " + name + " size: " + size;
+		String message = name;
 		return message;
 	}
 	

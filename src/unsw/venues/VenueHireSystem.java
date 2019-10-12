@@ -5,6 +5,8 @@ package unsw.venues;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Scanner;
 
@@ -70,29 +72,29 @@ public class VenueHireSystem {
         	break;
         	
         case "cancel":
-        	String id_cancel = json.getString("id");
-        	cancel(id_cancel);
+        	String cancel_id = json.getString("id");
+        	cancel(cancel_id);
         	break;
         	
         case "list":
         	String venue_list = json.getString("venue");
-        	list(venue_list);
+        	JSONArray list = list(venue_list);
+        	System.out.println(list.toString(2));
         	break;    	
         }
     }
     
     /**
-     * Method - adds a room to a venue. If venue doesn't exist, it is created
+     * Adds a room to a venue. If venue doesn't exist, it is created
      * @param venue - venue for room to be added to
      * @param room - name of room to be added
      * @param size - room size (small, medium, or large)
      */
     private void addRoom(String venue, String room, String size) {
-    	// if this venue exists, then use it
+    	// if this venue exists, then use use this venue
     	Venue new_venue = null;
     	int length = 0;
     	if (!venues.isEmpty()) {
-    	//if (venues != null) {
     		length = venues.size();
     		for ( int i = 0; i < length ; i++ ) {
         		if (venues.get(i).name.equals(venue)) {
@@ -103,16 +105,24 @@ public class VenueHireSystem {
     	}	   	
     	// if venue doesn't exist, create a new venue
     	if (new_venue == null) {
-    		//System.out.println("new venue made");
     		new_venue = new Venue(venue);
     		addVenue(new_venue);
     	}   		
     	// make the room and add it to venue
     	Room new_room = new Room(room, size);
     	new_venue.addRoom(new_room, size);
-    	//new_venue.toString();
     }
-
+    
+    /**
+     * process booking request
+     * @param id - id of booking
+     * @param start - start date of booking
+     * @param end - end date of booking
+     * @param small - number of small rooms
+     * @param medium - number of medium rooms
+     * @param large - number of large rooms
+     * @return JSON object
+     */
     public JSONObject request(String id, LocalDate start, LocalDate end,
             int small, int medium, int large) {
         JSONObject result = new JSONObject();
@@ -120,7 +130,6 @@ public class VenueHireSystem {
         // look through venues
         for (Venue v : venues) {        	
         	if (canBook(v, start, end, small, medium, large)) {
-        		System.out.println("I can book");
         		// then book it
         		Booking new_booking = new Booking(id, v, start, end);
         		// small, medium, large rooms required - decremented as they are booked
@@ -129,8 +138,7 @@ public class VenueHireSystem {
             	int lr = large;
             	JSONArray rooms = new JSONArray();
             	for (Room r : v.rooms) {
-            		// all booking requests fulfilled
-            		
+            		// all booking requests fulfilled            		
             		if (r.size.equals("small") && sr > 0) {
             			if (isAvailable(r, start, end)) {
             				new_booking.addRoom(r);
@@ -153,12 +161,12 @@ public class VenueHireSystem {
                 		}
             		}
             		if (sr == 0 && mr == 0 && lr == 0) {
-            			result.put("status", "success");
+            			result.put("rooms", rooms);           			
             	        result.put("venue", v.name);
-            	        result.put("rooms", rooms);
+            	        result.put("status", "success");
             	        addBooking(new_booking);
-            	        System.out.println("****** PRINT ALL BOOKINGS *******");
-            	        printBookings();
+            	        //System.out.println("****** PRINT ALL BOOKINGS *******");
+            	        //printBookings();
             	        return result;
             		}
             	}
@@ -168,6 +176,10 @@ public class VenueHireSystem {
 	    return result;    
     }
     
+    /**
+     *  cancel a booking in VenueHireSystem
+     * @param id - id of booking to be canceled
+     */
     public void cancel(String id) {
     	Booking to_remove = null;
     	for (Booking b : bookings) {
@@ -178,8 +190,13 @@ public class VenueHireSystem {
     	bookings.remove(to_remove);
     }
     
-    // Output a list of the occupancy for all rooms at Zoo, in order of room declarations, then date
-    public void list(String venue_string) {
+    /**
+     * Output a list of the occupancy for all rooms in given venue, in order of room declarations, then date
+     * @param venue_string - name of venue to have occupancy listed
+     * @return JSONObject 
+     */
+    public JSONArray list(String venue_string) {
+    	// find the venue given its name
     	Venue venue = null;
     	for (Venue v : venues) {
     		if (v.name.equals(venue_string)) {
@@ -187,30 +204,65 @@ public class VenueHireSystem {
     			break;
     		}
     	}
+    	// result is an array of objects - one for each room
+    	JSONArray result = new JSONArray();
     	// for each room in the venue
-    	for (Room r : venue.rooms) {    		
-	    	for (Booking b : bookings) {
-				if (b.rooms.contains(r)) {
-					// [ { "room": "Penguin", "reservations": [
-				    // { "id": "CSE Autumn Ball", "start": "2019-03-25", "end": "2019-03-26" },
-				    // { "id": "Annual Meeting", "start": "2019-03-27", "end": "2019-03-29" }
-				    // ] },
-					String id = b.id;
-					LocalDate start = b.start_date;
-					LocalDate end = b.end_date;
-					// print all the stuff
-					
+    	for (Room r : venue.rooms) {    
+    		// JSONObject for this room
+    		JSONObject object = new JSONObject();
+    		object.put("room", r.name);
+    		// get all starting dates for bookings for room r
+    		List<LocalDate> dates = new ArrayList<LocalDate>();
+	    	for (Booking b : bookings) {    		
+				if (b.rooms.contains(r)) {	
+					dates.add(b.start_date);
 				}
 	    	}
-    	}
+	    	// sort dates
+	    	Collections.sort(dates);	  
+	    	JSONArray bookingsArray = new JSONArray();
+			object.put("reservations", bookingsArray);
+			result.put(object);
+			for (LocalDate l : dates) {							
+				for (Booking b : bookings) {
+					if (b.start_date.equals(l) && b.rooms.contains(r)) {						
+				    	String id = b.id;
+						LocalDate start = b.start_date;
+						LocalDate end = b.end_date;
+						// make JSONObject about booking and put details in
+						JSONObject booking = new JSONObject();
+						booking.put("id", id);
+						booking.put("start", start);
+						booking.put("end", end);
+						bookingsArray.put(booking);
+					}
+				}
+			}
+			
+    	}   			
+    	return result;
     }
     
-    // adds venue to venues
+	
+
+    /**
+     * adds a venue to venues in VenueHireSystem
+     * @param venue - venue to be added to system
+     */
     private void addVenue(Venue venue) {
     	venues.add(venue);
     }
     
-    // looks at a venue and checks if booking can be made for that venue
+    /**
+     * Checks if booking can be made for given venue at given start and end dates
+     * @param venue - venue to be checked
+     * @param start - start date of booking to be made
+     * @param end - end date of booking to be made
+     * @param small - number of small rooms requested
+     * @param medium - number of medium rooms requested
+     * @param large - number of large rooms requested
+     * @return true if can book, false if cannot book
+     */
     private Boolean canBook(Venue venue, LocalDate start, LocalDate end, int small, int medium, int large) {
     	// if venue doesnt have enough of requested rooms - cannot book
     	if (venue.small < small || venue.medium < medium || venue.large < large) {
@@ -246,54 +298,51 @@ public class VenueHireSystem {
 		// not all bookings satisfied - cannot book
 		} else {
 			return false;
-		}
-    	
-    	
+		}    	   	
     }
     
-    // check if a room is available by going through all bookings for that room
+    /**
+     * check if a room is available between start and end dates by going through all bookings for that room
+     * @param r - room to be checked
+     * @param start - start date of proposed booking
+     * @param end - end date of proposed booking
+     * @return true if room is available, false if room is not available
+     */
     private Boolean isAvailable(Room r, LocalDate start, LocalDate end) {
-    	for (Booking b : bookings) {
-    		System.out.print("booking $$$$$$$$$$$$$$$$$$$$$$$");
-    		b.toString();
-    		
+    	for (Booking b : bookings) {   		
     		if (b.rooms.contains(r)) {
-    			System.out.println("BOOKING CONTAINS R");
     			// if start equals the booking start or end date return false
     			if (start.equals(b.start_date) || start.equals(b.end_date)) {
-    				System.out.println("CANNOT BOOK");
     				return false;
 				// if end equals the booking start or end date return false
     			} else if (end.equals(b.start_date) || end.equals(b.end_date)) {
-    				System.out.println("CANNOT BOOK");
     				return false;
     			}
     			// if start and end are inside the start_date and end_date of a booking return false
     			else if (start.isAfter(b.start_date) && end.isBefore(b.end_date)) { 	
-    				System.out.println("CANNOT BOOK");
     				return false; 			
     			}
     			// if start is before booking start_date and end is after booking end_date return false
     			else if (start.isBefore(b.start_date) && end.isAfter(b.end_date)) { 	
-    				System.out.println("CANNOT BOOK");
     				return false; 			
     			}
     			// if start is before booking start_date and end is after booking start_date return false
     			else if (start.isBefore(b.start_date) && end.isAfter(b.start_date)) { 	
-    				System.out.println("CANNOT BOOK");
     				return false; 			
     			}
     			// if start is before booking end_date and end is after booking end_date return false
     			else if (start.isBefore(b.end_date) && end.isAfter(b.end_date)) { 	
-    				System.out.println("CANNOT BOOK");
     				return false; 			
     			}
     		}
     	}
-    	System.out.print("I CAN BOOK");
     	return true;
     }
     
+    /**
+     * Add a booking to bookings in VenueHireSystem
+     * @param b - booking to be added
+     */
     public void addBooking(Booking b) {
     	bookings.add(b);
     }
