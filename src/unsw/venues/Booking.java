@@ -4,8 +4,6 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.json.JSONObject;
-
 public class Booking {
 	String id;
 	Venue venue;

@@ -21,7 +21,7 @@ public class Venue {
 	}
 	
 	/**
-	 * method - adds a room to venue
+	 * adds a room to venue and increments corresponding room size counter for venue
 	 * @param new_room - room to be added
 	 * @param size - room size (small, medium, or large)
 	 * 

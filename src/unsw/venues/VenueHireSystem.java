@@ -6,7 +6,6 @@ package unsw.venues;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Scanner;
 
@@ -19,9 +18,10 @@ import org.json.JSONObject;
  * A basic prototype to serve as the "back-end" of a venue hire system. Input
  * and output is in JSON format.
  *
- * @author Robert Clifton-Everest
+ * @author z5204935
  *
  */
+
 public class VenueHireSystem {
 	List<Venue> venues;
 	List<Booking> bookings;
@@ -30,7 +30,6 @@ public class VenueHireSystem {
      * rooms, or bookings.
      */
     public VenueHireSystem() {
-        // TODO Auto-generated constructor stub
     	this.venues = new ArrayList<Venue>();
     	this.bookings = new ArrayList<Booking>();
     }
@@ -125,20 +124,17 @@ public class VenueHireSystem {
      */
     public JSONObject request(String id, LocalDate start, LocalDate end,
             int small, int medium, int large) {
-        JSONObject result = new JSONObject();
-    	
+        JSONObject result = new JSONObject();    	
         // look through venues
         for (Venue v : venues) {        	
         	if (canBook(v, start, end, small, medium, large)) {
-        		// then book it
         		Booking new_booking = new Booking(id, v, start, end);
         		// small, medium, large rooms required - decremented as they are booked
         		int sr = small;
             	int mr = medium;
             	int lr = large;
             	JSONArray rooms = new JSONArray();
-            	for (Room r : v.rooms) {
-            		// all booking requests fulfilled            		
+            	for (Room r : v.rooms) {            		           		
             		if (r.size.equals("small") && sr > 0) {
             			if (isAvailable(r, start, end)) {
             				new_booking.addRoom(r);
@@ -160,97 +156,20 @@ public class VenueHireSystem {
                 			lr--;
                 		}
             		}
+            		// all booking requests fulfilled 
             		if (sr == 0 && mr == 0 && lr == 0) {
             			result.put("rooms", rooms);           			
             	        result.put("venue", v.name);
             	        result.put("status", "success");
             	        addBooking(new_booking);
-            	        //System.out.println("****** PRINT ALL BOOKINGS *******");
-            	        //printBookings();
             	        return result;
             		}
             	}
         	}
         }
+        // no venue can fulfill the request - it is rejected
         result.put("status", "rejected");    
 	    return result;    
-    }
-    
-    /**
-     *  cancel a booking in VenueHireSystem
-     * @param id - id of booking to be canceled
-     */
-    public void cancel(String id) {
-    	Booking to_remove = null;
-    	for (Booking b : bookings) {
-			if (b.id.equals(id)) {
-				to_remove = b;
-			}
-    	}
-    	bookings.remove(to_remove);
-    }
-    
-    /**
-     * Output a list of the occupancy for all rooms in given venue, in order of room declarations, then date
-     * @param venue_string - name of venue to have occupancy listed
-     * @return JSONObject 
-     */
-    public JSONArray list(String venue_string) {
-    	// find the venue given its name
-    	Venue venue = null;
-    	for (Venue v : venues) {
-    		if (v.name.equals(venue_string)) {
-    			venue = v;
-    			break;
-    		}
-    	}
-    	// result is an array of objects - one for each room
-    	JSONArray result = new JSONArray();
-    	// for each room in the venue
-    	for (Room r : venue.rooms) {    
-    		// JSONObject for this room
-    		JSONObject object = new JSONObject();
-    		object.put("room", r.name);
-    		// get all starting dates for bookings for room r
-    		List<LocalDate> dates = new ArrayList<LocalDate>();
-	    	for (Booking b : bookings) {    		
-				if (b.rooms.contains(r)) {	
-					dates.add(b.start_date);
-				}
-	    	}
-	    	// sort dates
-	    	Collections.sort(dates);	  
-	    	JSONArray bookingsArray = new JSONArray();
-			object.put("reservations", bookingsArray);
-			result.put(object);
-			for (LocalDate l : dates) {							
-				for (Booking b : bookings) {
-					if (b.start_date.equals(l) && b.rooms.contains(r)) {						
-				    	String id = b.id;
-						LocalDate start = b.start_date;
-						LocalDate end = b.end_date;
-						// make JSONObject about booking and put details in
-						JSONObject booking = new JSONObject();
-						booking.put("id", id);
-						booking.put("start", start);
-						booking.put("end", end);
-						bookingsArray.put(booking);
-					}
-				}
-			}
-			
-    	}   			
-    	return result;
-    }
-    
-	
-
-    /**
-     * adds a venue to venues in VenueHireSystem
-     * @param venue - venue to be added to system
-     */
-    private void addVenue(Venue venue) {
-    	venues.add(venue);
     }
     
     /**
@@ -340,6 +259,81 @@ public class VenueHireSystem {
     }
     
     /**
+     *  cancel a booking in VenueHireSystem
+     * @param id - id of booking to be canceled
+     */
+    public void cancel(String id) {
+    	Booking to_remove = null;
+    	for (Booking b : bookings) {
+			if (b.id.equals(id)) {
+				to_remove = b;
+			}
+    	}
+    	bookings.remove(to_remove);
+    }
+    
+    /**
+     * Output a list of the occupancy for all rooms in given venue, in order of room declarations, then date
+     * @param venue_string - name of venue to have occupancy listed
+     * @return JSONObject 
+     */
+    public JSONArray list(String venue_string) {
+    	// find the venue given its name
+    	Venue venue = null;
+    	for (Venue v : venues) {
+    		if (v.name.equals(venue_string)) {
+    			venue = v;
+    			break;
+    		}
+    	}
+    	// result is an array of objects - one for each room
+    	JSONArray result = new JSONArray();
+    	// for each room in the venue
+    	for (Room r : venue.rooms) {    
+    		// JSONObject for this room
+    		JSONObject object = new JSONObject();
+    		object.put("room", r.name);
+    		// get all starting dates for bookings for room r
+    		List<LocalDate> dates = new ArrayList<LocalDate>();
+	    	for (Booking b : bookings) {    		
+				if (b.rooms.contains(r)) {	
+					dates.add(b.start_date);
+				}
+	    	}
+	    	// sort dates
+	    	Collections.sort(dates);	  
+	    	JSONArray bookingsArray = new JSONArray();
+			object.put("reservations", bookingsArray);
+			result.put(object);
+			for (LocalDate l : dates) {							
+				for (Booking b : bookings) {
+					if (b.start_date.equals(l) && b.rooms.contains(r)) {						
+				    	String id = b.id;
+						LocalDate start = b.start_date;
+						LocalDate end = b.end_date;
+						// make JSONObject about booking and put details in
+						JSONObject booking = new JSONObject();
+						booking.put("id", id);
+						booking.put("start", start);
+						booking.put("end", end);
+						bookingsArray.put(booking);
+					}
+				}
+			}
+			
+    	}   			
+    	return result;
+    }
+    
+    /**
+     * adds a venue to venues in VenueHireSystem
+     * @param venue - venue to be added to system
+     */
+    private void addVenue(Venue venue) {
+    	venues.add(venue);
+    }
+     
+    /**
      * Add a booking to bookings in VenueHireSystem
      * @param b - booking to be added
      */
@@ -347,6 +341,10 @@ public class VenueHireSystem {
     	bookings.add(b);
     }
     
+    // methods for debugging
+    /**
+     * prints all bookings in VenueHireSystem
+     */
     public void printBookings() {
     	for (Booking b : bookings) {
     		System.out.println("##################");
@@ -355,6 +353,9 @@ public class VenueHireSystem {
     	}
     }
     
+    /**
+     *  prints all venues in VenueHireSystem
+     */
     public void printVenues() {
 		for (Venue v : venues) {
 			System.out.println("^^^^^^^^^^^^");
